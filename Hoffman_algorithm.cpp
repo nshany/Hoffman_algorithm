@@ -15,7 +15,7 @@ void Hoffman::analyze()
 	std::multimap<int, char> multi;
 	std::fstream file(filename);
 	if (file) {
-
+		file.unsetf(ios::skipws);
 		while (!file.eof()) 
 		{
 			file >> ch;
@@ -29,17 +29,17 @@ void Hoffman::analyze()
 			}
 		}
 
-		std::vector<std::pair<char, int>> vec(m_map.size());
-
 		for (const auto& var : m_map)
 		{
 			multi.insert({ var.second, var.first });
 		}
+
 		make_symbols_tree(multi);
+
 		tree_to_table("", root);
 		for (const auto& var : char_table)
 		{
-			std::cout << "symbol = " << var.first << " code = " << var.second << std::endl;
+			std::cout << "symbol = " << var.first << " code = " << var.second << '\n';
 		}
 		file.close();
 	}
@@ -52,6 +52,7 @@ void Hoffman::analyze()
 std::string Hoffman::get_compressed_filename() const
 {
 	std::fstream file(filename);
+	file.unsetf(ios::skipws);
 	if(file) {
 
 		std::string code;
@@ -61,6 +62,8 @@ std::string Hoffman::get_compressed_filename() const
 		{
 			compressed_file << var.first << " " << var.second << '\n';
 		}
+
+		compressed_file << '\n';
 
 		while (!file.eof())
 		{
@@ -80,12 +83,54 @@ std::string Hoffman::get_compressed_filename() const
 	}
 }
 
+void Hoffman::binary_to_text(std::string filename)
+{
+	std::fstream file(filename);
+	std::string line;
+	std::map<std::string, char> reverse_tree;
+	std::ofstream decompressed_file("decompressed_" + filename);
+	file.unsetf(ios::skipws);
+	if (file)
+	{
+		char ch;
+		std::string code;
+		int counter = 0;
+		while(std::getline(file, line))
+		{
+			if (line != "") {
+				ch = line[0];
+				code = line.substr(2, line.size() - 1);
+				reverse_tree.insert({ code, ch });
+			}
+			else
+			{
+				break;
+			}
+		}
+		
+		std::string str;
+		code = "";
+		while (!file.eof())
+		{
+			file >> ch;
+			code += ch;
+			if (reverse_tree.find(code) != reverse_tree.end()) {
+				decompressed_file << reverse_tree[code];
+				code = "";
+			}
+		}
+	}
+	else {
+		std::cerr << "file openning failed" << '\n';
+	}
+}
+
 void Hoffman::make_symbols_tree(std::multimap<int, char>& multi)
 {
 	std::priority_queue<Node*,std::vector<Node*>, Node::MyCompare> p_queue;
 	for (multimap<int, char>::iterator i = multi.begin(); i != multi.end(); i++)
 	{
-		std::cout << i->first << " " << i->second << std::endl;
+		std::cout << i->first << " " << i->second << '\n';
 		p_queue.push(new Node(i->first, i->second));
 	}
 
@@ -126,6 +171,7 @@ void Hoffman::tree_to_table(std::string code, Node *tmp)
 		code = code.substr(0, code.size() - 1);
 		return;
 	}
+
 	tree_to_table(code + '0',tmp->left);
 	tree_to_table(code + '1', tmp->right);
 }

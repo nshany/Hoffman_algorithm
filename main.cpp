@@ -3,16 +3,17 @@
 #include <fstream>
 int main()
 {
-	std::cout << "Input the file name   ";
+	/*std::cout << "Input the file name   ";
 
 	char ch;
 	std::string filename = "";
 	while (std::cin.get(ch) && ch != '\n')
 		filename += ch;
-	std::fstream my_file;
+	std::fstream my_file;*/
 
 
-	Hoffman obj("sample-2mb-text-file.txt");
-	obj.analyze();
-	std::cout<<obj.get_compressed_filename();
+	Hoffman obj("my_file.txt");
+	//obj.analyze();
+	//obj.get_compressed_filename();
+	obj.binary_to_text("compressed_my_file.txt");
 }
