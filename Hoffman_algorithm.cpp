@@ -3,7 +3,6 @@
 #include <iostream>
 #include "Hoffman_algorithm.h"
 #include <algorithm>
-#include <bitset>
 #include <fstream>
 using namespace std;
 
@@ -15,10 +14,11 @@ void Hoffman::analyze()
 	char ch;
 	std::multimap<int, char> multi;
 	std::fstream file(filename);
-	file.unsetf(ios::skipws);
 	if (file) {
-		while (file >> ch)
+		file.unsetf(ios::skipws);
+		while (!file.eof()) 
 		{
+			file >> ch;
 			if (m_map.find(ch) == m_map.end())
 			{
 				m_map.insert(std::make_pair(ch, 1));
@@ -54,37 +54,22 @@ std::string Hoffman::get_compressed_filename() const
 	std::fstream file(filename);
 	file.unsetf(ios::skipws);
 	if(file) {
-		std::string current;
-		string code;
-		unsigned char ch;
+
+		std::string code;
+		char ch;
 		std::ofstream compressed_file("compressed_" + filename);
-		size_t max_code_size = 0;
 		for (decltype(auto) var : char_table)
 		{
-			if (var.first == '\n') {
-				compressed_file << char(1) << " " << var.second << '\n';
-			}
-			else {
-				compressed_file << var.first << " " << var.second << '\n';
-			}
+			compressed_file << var.first << " " << var.second << '\n';
 		}
 
 		compressed_file << '\n';
 
-		while (file >> ch)
+		while (!file.eof())
 		{
-			current += char_table.at(ch);
-			if (current.size() >= 8)
-			{
-				code = current.substr(0, 8);
-				current = current.substr(8, current.size() - 1);
-				ch = static_cast<unsigned int>(bitset<8>(code).to_ulong());
-				compressed_file << ch;
-			}
-		}
-
-		if (current.size() != 0) {
-			compressed_file << (unsigned char)static_cast<unsigned int>(bitset<8>(code).to_ulong());
+			file >> ch;
+			code = char_table.at(ch);
+			compressed_file << code;
 		}
 
 		compressed_file.close();
@@ -115,54 +100,29 @@ void Hoffman::binary_to_text(std::string filename)
 			if (line != "") {
 				ch = line[0];
 				code = line.substr(2, line.size() - 1);
-				if (ch == char(1)) {
-					reverse_tree.insert({ code, '\n' });
-				}
-				else {
-					reverse_tree.insert({ code, ch });
-				}
+				reverse_tree.insert({ code, ch });
 			}
 			else
 			{
 				break;
 			}
 		}
+		
+		std::string str;
 		code = "";
-		std::string current_code;
-		std::string decoded_symbols;
-		size_t decoded_code_size = 0;
-		size_t i = 0;
-
-		while (file >> ch)
+		while (!file.eof())
 		{
-			decoded_code_size = 0;
-			code += std::bitset<8>(ch).to_string();
-			for (size_t i = 0; i < code.size();i++)
-			{
-				current_code += code[i];
-				if (reverse_tree.find(current_code) != reverse_tree.end())
-				{
-					decoded_symbols += reverse_tree[current_code];
-					decoded_code_size += current_code.size();
-					current_code = "";
-				}
+			file >> ch;
+			code += ch;
+			if (reverse_tree.find(code) != reverse_tree.end()) {
+				decompressed_file << reverse_tree[code];
+				code = "";
 			}
-			current_code = "";
-			decompressed_file << decoded_symbols;
-			code = code.substr(decoded_code_size, code.size() - 1);
-			decoded_symbols = "";
 		}
-		decompressed_file.close();
 	}
 	else {
 		std::cerr << "file openning failed" << '\n';
 	}
-
-}
-
-std::string Hoffman::decode_symbol(int ch)
-{
-	return std::bitset<8>(ch).to_string();
 }
 
 void Hoffman::make_symbols_tree(std::multimap<int, char>& multi)
@@ -207,7 +167,7 @@ void Hoffman::tree_to_table(std::string code, Node *tmp)
 {
 	if (tmp->left == nullptr && tmp->right == nullptr)
 	{
-		char_table.insert({ tmp->m_symbol, code});
+		char_table.insert({ tmp->m_symbol, code });
 		code = code.substr(0, code.size() - 1);
 		return;
 	}
