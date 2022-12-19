@@ -84,7 +84,12 @@ std::string Hoffman::get_compressed_filename() const
 		}
 
 		if (current.size() != 0) {
-			compressed_file << (unsigned char)static_cast<unsigned int>(bitset<8>(code).to_ulong());
+			std::string after = current;
+			for (size_t i = current.size(); i < 8; i++)
+			{
+				after += '0';
+			}
+			compressed_file << (char)static_cast<unsigned int>(bitset<8>(after).to_ulong());
 		}
 
 		compressed_file.close();
@@ -158,11 +163,6 @@ void Hoffman::binary_to_text(std::string filename)
 		std::cerr << "file openning failed" << '\n';
 	}
 
-}
-
-std::string Hoffman::decode_symbol(int ch)
-{
-	return std::bitset<8>(ch).to_string();
 }
 
 void Hoffman::make_symbols_tree(std::multimap<int, char>& multi)
