@@ -13,6 +13,7 @@ public:
 	std::string get_compressed_filename() const;
 	void binary_to_text(std::string filename);
 private:
+	std::string decode_symbol(int ch);
 	void make_symbols_tree(std::multimap<int, char> &);
 	void tree_to_table(std::string code, Node* node);
 
