@@ -37,10 +37,6 @@ void Hoffman::analyze()
 		make_symbols_tree(multi);
 
 		tree_to_table("", root);
-		for (const auto& var : char_table)
-		{
-			std::cout << "symbol = " << var.first << " code = " << var.second << '\n';
-		}
 		file.close();
 	}
 	else
@@ -56,13 +52,13 @@ std::string Hoffman::get_compressed_filename() const
 	if(file) {
 		std::string current;
 		string code;
-		unsigned char ch;
+		char ch;
 		std::ofstream compressed_file("compressed_" + filename);
 		size_t max_code_size = 0;
 		for (decltype(auto) var : char_table)
 		{
 			if (var.first == '\n') {
-				compressed_file << char(1) << " " << var.second << '\n';
+				compressed_file << char(16) << " " << var.second << '\n';
 			}
 			else {
 				compressed_file << var.first << " " << var.second << '\n';
@@ -117,10 +113,10 @@ void Hoffman::binary_to_text(std::string filename)
 		int counter = 0;
 		while(std::getline(file, line))
 		{
-			if (line != "") {
+			if (line != "" ) {
 				ch = line[0];
 				code = line.substr(2, line.size() - 1);
-				if (ch == char(1)) {
+				if (ch == char(16)) {
 					reverse_tree.insert({ code, '\n' });
 				}
 				else {
@@ -153,9 +149,11 @@ void Hoffman::binary_to_text(std::string filename)
 				}
 			}
 			current_code = "";
-			decompressed_file << decoded_symbols;
-			code = code.substr(decoded_code_size, code.size() - 1);
-			decoded_symbols = "";
+			if (decoded_symbols.size() != 0) {
+				decompressed_file << decoded_symbols;
+				code = code.substr(decoded_code_size, code.size() - 1);
+				decoded_symbols = "";
+			}
 		}
 		decompressed_file.close();
 	}
